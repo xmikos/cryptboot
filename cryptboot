@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# Parse cryptsetup device from /etc/crypttab
+find_crypt_dev() {
+  crypt_name="$1"
+  while read -r line || [[ -n "$line" ]]; do
+    line="$(echo "$line" | sed 's/\s\+/\t/g')"
+    line_crypt_name="$(echo "$line" | cut -f 1)"
+    line_crypt_dev="$(echo "$line" | cut -f 2)"
+    if [[ "$line_crypt_name" = "$crypt_name" ]]; then
+      echo "$line_crypt_dev"
+      return 0
+    fi
+  done < /etc/crypttab
+  return 1
+}
+
+# Remove EFI boot manager entries by label
+remove_efi_boot_entry() {
+  entry_label="$1"
+  efi_boot_entries="$(efibootmgr)"
+  while read -r line || [[ -n "$line" ]]; do
+    if [[ $line =~ ^Boot([0-9A-F]+)\*?[[:blank:]]+(.+)$ ]]; then
+      line_entry_num="${BASH_REMATCH[1]}"
+      line_entry_label="${BASH_REMATCH[2]}"
+      if [[ "$entry_label" = "$line_entry_label" ]]; then
+        efibootmgr -q -b "$line_entry_num" -B
+      fi
+    fi
+  done <<< "$efi_boot_entries"
+}
+
+# Check if user is root
+if [[ $UID -ne 0 ]]; then
+  echo "Permission denied (you must be root)"
+  exit 1
+fi
+
+# Default config
+SRCDIR="$(dirname "$(readlink -f "$0")")"
+
+BOOT_CRYPT_NAME="cryptboot"
+BOOT_DIR="/boot"
+EFI_DIR="/boot/efi"
+BOOT_LOADER="GRUB"
+EFI_ID_GRUB="GRUB"
+EFI_PATH_GRUB="EFI/grub/grubx64.efi"
+PKG_UPGRADE_CMD="pacman -Syu"
+
+# Load config file
+if [[ -f "/etc/cryptboot.conf" ]]; then
+  source "/etc/cryptboot.conf"
+elif [[ -f "$SRCDIR/cryptboot.conf" ]]; then
+  source "$SRCDIR/cryptboot.conf"
+fi
+
+# Get path to cryptboot-efikeys executable
+EFIKEYS_BIN="$(which cryptboot-efikeys 2>/dev/null)" || EFIKEYS_BIN="$SRCDIR/cryptboot-efikeys"
+
+# Check if cryptsetup boot device exists
+BOOT_CRYPT_DEV="$(find_crypt_dev "$BOOT_CRYPT_NAME")"
+if [[ -z "$BOOT_CRYPT_DEV" ]]; then
+  echo "Couldn't find cryptsetup device name '$BOOT_CRYPT_NAME', check your /etc/crypttab"
+  exit 1
+fi
+
+# Check if /boot mountpoint exists
+if ! findmnt -sn "$BOOT_DIR" &>/dev/null; then
+  echo "Couldn't find boot partition mountpoint '$BOOT_DIR', check your /etc/fstab"
+  exit 1
+fi
+
+# Check if /boot/efi mountpoint exists
+if ! findmnt -sn "$EFI_DIR" &>/dev/null; then
+  echo "Couldn't find EFI System partition mountpoint '$EFI_DIR', check your /etc/fstab"
+  exit 1
+fi
+
+# Main program
+case "$1" in
+  mount)
+    if findmnt -n "$BOOT_DIR" &>/dev/null || findmnt -n "$EFI_DIR" &>/dev/null; then
+      echo "Boot partition or EFI System partition already mounted, skipping mount..."
+      exit 1
+    fi
+
+    echo "Unlocking encrypted boot partition..."
+    cryptsetup open "$BOOT_CRYPT_DEV" "$BOOT_CRYPT_NAME"
+
+    echo "Mounting boot partition..."
+    mount "$BOOT_DIR"
+
+    echo "Mounting EFI System partition..."
+    mount "$EFI_DIR"
+    ;;
+  umount)
+    if ! findmnt -n "$BOOT_DIR" &>/dev/null || ! findmnt -n "$EFI_DIR" &>/dev/null; then
+      echo "Boot partition or EFI System partition not mounted, skipping unmount..."
+      exit 1
+    fi
+
+    echo "Unmounting EFI System partition..."
+    umount "$EFI_DIR"
+
+    echo "Unmounting boot partition..."
+    umount "$BOOT_DIR"
+
+    echo "Locking encrypted boot partition..."
+    cryptsetup close "$BOOT_CRYPT_NAME"
+    ;;
+  update-grub)
+    echo "Regenerating GRUB config file..."
+    grub-mkconfig -o "$BOOT_DIR/grub/grub.cfg"
+
+    echo "Reinstalling GRUB to EFI System partition..."
+    grub-install --target=x86_64-efi --boot-directory="$BOOT_DIR" --efi-directory="$EFI_DIR" --bootloader-id="$EFI_ID_GRUB"
+
+    echo "Signing GRUB with UEFI Secure Boot keys..."
+    "$EFIKEYS_BIN" sign "$EFI_DIR/$EFI_PATH_GRUB"
+    sync
+    ;;
+  upgrade)
+    $0 mount
+    echo "Upgrading packages..."
+    $PKG_UPGRADE_CMD
+    if [[ "$BOOT_LOADER" = "GRUB" ]]; then
+      $0 update-grub
+    fi
+    $0 umount
+    ;;
+  *)
+    echo "Usage: $(basename "$0") {mount|umount|update-grub|upgrade}"
+    echo
+    echo "Encrypted boot partition manager with UEFI Secure Boot support"
+    echo
+    echo "Commands:"
+    echo "    mount        Unlock and mount your encrypted boot partition and EFI System partition"
+    echo "    umount       Unmount and lock your encrypted boot partition and EFI System partition"
+    echo "    update-grub  Update GRUB2 boot loader and sign it with your UEFI Secure Boot keys"
+    echo "    upgrade      Mount, upgrade system with package manager, update boot loader and unmount"
+esac
