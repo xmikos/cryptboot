@@ -120,14 +120,27 @@ case "$1" in
         echo "Please generate them first with '$0 create' and then enroll them with '$0 enroll'"
         exit 1
     fi
+    echo "List of all signatures in '$filename':"
+    sbverify --list "$filename"
+    echo
 
-    echo "Verifying signature of file '$filename' with UEFI Secure Boot keys..."
+    echo "Verifying signature with UEFI Secure Boot keys..."
     sbverify --cert db.crt "$filename"
     ;;
   list)
     echo "All UEFI Secure Boot keys enrolled in your UEFI firmware:"
-    echo
     efi-readvar
+    ;;
+  status)
+    echo -n "UEFI Secure Boot status: "
+    secureboot="$(od -An -t u1 --read-bytes=1 --skip-bytes=4 /sys/firmware/efi/efivars/SecureBoot-*)"
+    if [[ "$secureboot" -eq 1 ]]; then
+        echo "ACTIVE"
+        exit 0
+    else
+        echo "INACTIVE"
+        exit 1
+    fi
     ;;
   *)
     echo "Usage: $(basename "$0") {create,enroll,sign,verify,list} [file-to-sign-or-verify]"
@@ -141,4 +154,5 @@ case "$1" in
     echo "    sign    Sign EFI boot image file with your UEFI Secure Boot keys"
     echo "    verify  Verify signature of EFI boot image file with your UEFI Secure Boot keys"
     echo "    list    List all UEFI Secure Boot keys enrolled in your UEFI firmware"
+    echo "    status  Check if UEFI Secure Boot is active or inactive"
 esac
