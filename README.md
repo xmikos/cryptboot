@@ -109,6 +109,7 @@ Help
         sign    Sign EFI boot image file with your UEFI Secure Boot keys
         verify  Verify signature of EFI boot image file with your UEFI Secure Boot keys
         list    List all UEFI Secure Boot keys enrolled in your UEFI firmware
+        status  Check if UEFI Secure Boot is active or inactive
 
 **Default configuration (`/etc/cryptboot.conf`)**
 
