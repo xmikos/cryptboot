@@ -13,6 +13,7 @@ package() {
   cd "$srcdir/$pkgname-$pkgver"
   install -Dm755 cryptboot "$pkgdir/usr/bin/cryptboot"
   install -Dm755 cryptboot-efikeys "$pkgdir/usr/bin/cryptboot-efikeys"
+  install -Dm755 cryptboot-grub-warning "$pkgdir/etc/cryptboot-grub-warning"
   install -Dm644 cryptboot.conf "$pkgdir/etc/cryptboot.conf"
 }
 

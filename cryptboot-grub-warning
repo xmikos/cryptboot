@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# This file should be placed in your $PATH at a higher precedence than /usr/bin/grub-install (e.g. /usr/local/bin/grub-install)
+# to ensure that we always run `cryptboot update-grub` to sign the bootloader after the bootloader file is updated.
+
+red='\033[0;31m'
+nc='\033[0m'
+
+echo -e "${red}ERROR:\nRun 'cryptboot update-grub' instead of 'grub-install' to ensure bootloader is signed.\nFailure to sign the bootloader will cause subsequent Secure Boots to fail.${nc}"
+exit 1
