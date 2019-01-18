@@ -66,8 +66,12 @@ Installation
 7. Unmount `/boot` partition and EFI System partition:
 
         cryptboot umount
+        
+8. Optional: Install cryptboot-grub-warning script to raise an error if running `grub-install` directly instead of `cryptboot update-grub`:
 
-8. Reboot your system, you should be completely secured against evil maid attacks from now on!
+        ln -s /etc/cryptboot-grub-warning /usr/local/bin/grub-install
+
+9. Reboot your system, you should be completely secured against evil maid attacks from now on!
 
 Usage
 -----
