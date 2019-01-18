@@ -7,7 +7,7 @@ arch=('any')
 url="https://github.com/xmikos/cryptboot"
 license=('GPL3')
 depends=('cryptsetup' 'grub' 'efibootmgr' 'efitools' 'sbsigntools')
-install=('cryptboot.install')
+install="cryptboot.install"
 source=(https://github.com/xmikos/cryptboot/archive/v$pkgver.tar.gz)
 
 package() {
