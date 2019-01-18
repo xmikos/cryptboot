@@ -15,6 +15,8 @@ package() {
   install -Dm755 cryptboot-efikeys "$pkgdir/usr/bin/cryptboot-efikeys"
   install -Dm755 cryptboot-grub-warning "$pkgdir/etc/cryptboot-grub-warning"
   install -Dm644 cryptboot.conf "$pkgdir/etc/cryptboot.conf"
+  mkdir -p "$pkgdir/usr/local/bin/"
+  ln -s "$pkgdir/etc/cryptboot-grub-warning" "$pkgdir/usr/local/bin/grub-install"
 }
 
 # vim:set ts=2 sw=2 et:
