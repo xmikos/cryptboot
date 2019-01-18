@@ -1,0 +1,11 @@
+post_install() {
+    export PATH=$PATH
+}
+
+post_upgrade() {
+    export PATH=$PATH
+}
+
+post_remove() {
+    export PATH=$PATH
+}
