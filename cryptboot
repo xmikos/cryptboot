@@ -118,6 +118,11 @@ case "$1" in
     echo "Signing GRUB with UEFI Secure Boot keys..."
     "$EFIKEYS_BIN" sign "$EFI_DIR/$EFI_PATH_GRUB"
     sync
+    
+    if [ -e /usr/lib/initcpio/hooks/chkcryptoboot ]; then
+      mkinitcpio -p linux
+    fi
+    
     ;;
   upgrade)
     $0 mount
