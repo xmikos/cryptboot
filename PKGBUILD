@@ -17,7 +17,6 @@ package() {
   install -Dm644 cryptboot.conf "$pkgdir/etc/cryptboot.conf"
   mkdir -p "$pkgdir/usr/local/bin/"
   ln -s "$pkgdir/etc/cryptboot-grub-warning" "$pkgdir/usr/local/bin/grub-install"
-  install -Dm644 90-cryptboot.hook "$pkgdir/etc/pacman.d/hooks/90-cryptboot.hook"
 }
 
 # vim:set ts=2 sw=2 et:
