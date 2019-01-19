@@ -8,7 +8,7 @@ url="https://github.com/xmikos/cryptboot"
 license=('GPL3')
 depends=('cryptsetup' 'grub' 'efibootmgr' 'efitools' 'sbsigntools')
 install="cryptboot.install"
-source=(https://github.com/xmikos/cryptboot/archive/v$pkgver.tar.gz)
+source=("${pkgname}-${pkgver}.tar.gz::$url/archive/v$pkgver.tar.gz")
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
