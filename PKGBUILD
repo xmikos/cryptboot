@@ -7,13 +7,17 @@ arch=('any')
 url="https://github.com/xmikos/cryptboot"
 license=('GPL3')
 depends=('cryptsetup' 'grub' 'efibootmgr' 'efitools' 'sbsigntools')
-source=(https://github.com/xmikos/cryptboot/archive/v$pkgver.tar.gz)
+install="cryptboot.install"
+source=("${pkgname}-${pkgver}.tar.gz::$url/archive/v$pkgver.tar.gz")
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
   install -Dm755 cryptboot "$pkgdir/usr/bin/cryptboot"
   install -Dm755 cryptboot-efikeys "$pkgdir/usr/bin/cryptboot-efikeys"
+  install -Dm755 cryptboot-grub-warning "$pkgdir/etc/cryptboot-grub-warning"
   install -Dm644 cryptboot.conf "$pkgdir/etc/cryptboot.conf"
+  mkdir -p "$pkgdir/usr/local/bin/"
+  ln -s "/etc/cryptboot-grub-warning" "$pkgdir/usr/local/bin/grub-install"
 }
 
 # vim:set ts=2 sw=2 et:
