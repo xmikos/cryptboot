@@ -120,7 +120,7 @@ case "$1" in
     sync
     
     if [ -e /usr/lib/initcpio/hooks/chkcryptoboot ]; then
-      mkinitcpio -p linux
+      mkinitcpio -P linux
     fi
     
     ;;
