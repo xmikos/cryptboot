@@ -76,7 +76,7 @@ case "$1" in
     grub-mkconfig -o "$BOOT_DIR/grub/grub.cfg"
 
     echo "Reinstalling GRUB to EFI System partition..."
-    grub-install --target=x86_64-efi --boot-directory="$BOOT_DIR" --efi-directory="$EFI_DIR" --bootloader-id="$EFI_ID_GRUB" --modules="tpm" --disable-shim-lock
+    /usr/bin/grub-install --target=x86_64-efi --boot-directory="$BOOT_DIR" --efi-directory="$EFI_DIR" --bootloader-id="$EFI_ID_GRUB" --modules="tpm" --disable-shim-lock
 
     echo "Signing GRUB with UEFI Secure Boot keys..."
     "$EFIKEYS_BIN" sign "$EFI_DIR/$EFI_PATH_GRUB"
