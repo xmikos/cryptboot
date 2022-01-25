@@ -31,8 +31,18 @@ Requirements
 - efibootmgr
 - grub (grub-efi on Debian based distributions)
 
+On Arch Linux, use `sudo pacman -S efitools sbsigntools efibootmgr`.
+
 Installation
 ------------
+
+0. Before you enroll your own keys, you can backup the ones which are currently deployed
+```bash
+efi-readvar -v PK -o old_PK.esl
+efi-readvar -v KEK -o old_KEK.esl
+efi-readvar -v db -o old_db.esl
+efi-readvar -v dbx -o old_dbx.esl
+```
 
 1. Install your favorite Linux distribution with separate `/boot` partition encrypted with LUKS.
    Refer to your distributions documentation, there is e.g. guide for Arch Linux:
@@ -79,6 +89,7 @@ After installation, usage of `cryptboot` is as simple as running:
 This will mount `/boot` partition and EFI System partition, properly upgrade your system
 with distributions package manager, update and sign GRUB boot loader and finally
 unmount `/boot` partition and EFI System partition.
+We hook the call to `grub-install` by putting a simple `grub-install` script into `/usr/local/bin` to call `cryptboot update-grub`. This will prevent failing to boot if someone (or a script) calls `grub-install` without signing the bootloader afterwards.
 
 
 Help
@@ -138,8 +149,8 @@ Help
     # Command run to upgrade system packages
     PKG_UPGRADE_CMD="pacman -Syu"
 
-Limitations
------------
+
+## Limitations
 
 - If there is backdoor in your UEFI firmware, you are out of luck. It is *GAME OVER*.
 
@@ -182,3 +193,19 @@ Limitations
 
   The question is if this is really needed? If you don't trust UEFI firmware, why should you
   trust TPM? But nevertheless it would be nice to have double-check against evil maids.
+
+## Further reading
+
+- Encrypted boot partition (GRUB) - https://wiki.archlinux.org/title/Dm-crypt/Encrypting_an_entire_system#Encrypted_boot_partition_(GRUB)
+- UEFI (Secure_Boot) - https://wiki.archlinux.org/title/Unified_Extensible_Firmware_Interface/Secure_Boot
+- How to boot Linux using UEFI with Secure Boot?  - https://ubs_csse.gitlab.io/secu_os/tutorials/linux_secure_boot.html
+
+## Fixing: error: verification requested but nobody cares: (cryptouuid/$PARTITION_UUID)/grub/x86_64-efi/normal.mod
+
+This occurs during boot after upgrading to grub2 2.06. The fix is to add `--modules="tpm" and --disable-shim-lock)` as parameters to `grub-install`. Unfortunately it's not clear why it's needed (as we don't use TPM or shim). Further reading about this topic:
+
+- https://www.mail-archive.com/bug-grub@gnu.org/msg17008.html
+- https://bugs.archlinux.org/task/71382
+- https://bbs.archlinux.org/viewtopic.php?id=267944
+- https://github.com/archlinux/svntogit-packages/commit/4144617d6ee4aa52d27f4b84c977a413f2e860fe#diff-3e341d2d9c67be01819b25b25d5e53ea3cdf3a38d28846cda85a195eb9b7203a
+- https://wejn.org/2021/09/fixing-grub-verification-requested-nobody-cares/
