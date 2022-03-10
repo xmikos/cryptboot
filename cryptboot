@@ -27,6 +27,20 @@ fi
 # Get path to cryptboot-efikeys executable
 EFIKEYS_BIN="$(which cryptboot-efikeys 2>/dev/null)" || EFIKEYS_BIN="$SRCDIR/cryptboot-efikeys"
 
+find_crypt_dev() {
+  crypt_name="$1"
+  while read -r line || [[ -n "$line" ]]; do
+    line="$(echo "$line" | sed 's/\s\+/\t/g')"
+    line_crypt_name="$(echo "$line" | cut -f 1)"
+    line_crypt_dev="$(echo "$line" | cut -f 2)"
+    if [[ "$line_crypt_name" = "$crypt_name" ]]; then
+      echo "$line_crypt_dev"
+      return 0
+    fi
+  done < /etc/crypttab
+}
+
+
 # Check if /boot mountpoint exists
 if ! findmnt -sn "$BOOT_DIR" &>/dev/null; then
   echo "Couldn't find boot partition mountpoint '$BOOT_DIR', check your /etc/fstab"
@@ -44,6 +58,12 @@ case "$1" in
   mount)
     if findmnt -n "$BOOT_DIR" &>/dev/null || findmnt -n "$EFI_DIR" &>/dev/null; then
       echo "Boot partition or EFI System partition already mounted, skipping mount..."
+      exit 1
+    fi
+
+    BOOT_CRYPT_DEV="$(find_crypt_dev "$BOOT_CRYPT_NAME")"
+    if [[ -z "$BOOT_CRYPT_DEV" ]]; then
+      echo "Couldn't find cryptsetup device name '$BOOT_CRYPT_NAME', check your /etc/crypttab"
       exit 1
     fi
 
