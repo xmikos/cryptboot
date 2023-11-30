@@ -31,7 +31,7 @@ Requirements
 - efibootmgr
 - grub (grub-efi on Debian based distributions)
 
-On Arch Linux, use `sudo pacman -S efitools sbsigntools efibootmgr`.
+On Arch Linux, there is a [AUR package cryptboot](https://aur.archlinux.org/packages/cryptboot).
 
 Installation
 ------------
