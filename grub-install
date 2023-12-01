@@ -1,0 +1,8 @@
+#!/bin/bash
+set -eu
+
+# this will
+# 1) call grub-mkconfig
+# 2) call grub-install
+# 3) sign the bootloader
+cryptboot update-grub
